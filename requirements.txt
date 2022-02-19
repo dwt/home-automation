@@ -1,0 +1,16 @@
+aiocoap==0.4.3
+base36==0.1.1
+cffi==1.15.0
+colormath==3.0.0
+cryptography==36.0.1
+Cython==0.29.27
+DTLSSocket==0.1.12
+h11==0.13.0
+-e git+https://github.com/ikalchev/HAP-python@6c2b95cc6457ea9c8dbee1759455a6954bb14092#egg=HAP_python
+ifaddr==0.1.7
+networkx==2.6.3
+numpy==1.22.2
+pycparser==2.21
+PyQRCode==1.2.1
+-e git+https://github.com/ggravlingen/pytradfri@8aaf0bd0075557bc0bf69915411b5ac3d963b026#egg=pytradfri
+zeroconf==0.38.3
