@@ -11,7 +11,7 @@ from pytradfri.error import PytradfriError
 from pytradfri.util import load_json, save_json
 from pytradfri.const import (
     RANGE_HUE, RANGE_SATURATION, RANGE_BRIGHTNESS,
-    ATTR_LIGHT_COLOR_SATURATION, ATTR_LIGHT_COLOR_HUE, 
+    ATTR_LIGHT_COLOR_SATURATION, ATTR_LIGHT_COLOR_HUE,
     ATTR_LIGHT_DIMMER, ATTR_TRANSITION_TIME,
 )
 
@@ -32,9 +32,9 @@ def parse_arguments():
     parser.add_argument('--hue',        type=int, help='Hue: 0-360')
     parser.add_argument('--saturation', type=int, help='Saturation: 0-100')
     parser.add_argument('--brightness', type=int, help='Brightness: 0-100, 0 for off')
-    
+
     args = parser.parse_args()
-    
+
     if args.host not in load_json(CONFIG_FILE) and args.key is None:
         print("Please provide the 'Security Code' on the back of your "
               "Tradfri gateway:", end=" ")
@@ -43,7 +43,7 @@ def parse_arguments():
             raise PytradfriError("Invalid 'Security Code' provided.")
         else:
             args.key = key
-    
+
     return args
 
 async def connect_gateway(args):
@@ -70,11 +70,11 @@ async def connect_gateway(args):
             raise PytradfriError("Please provide the 'Security Code' on the "
                                  "back of your Tradfri gateway using the "
                                  "-K flag.")
-    
+
     api = api_factory.request
     gateway = Gateway()
     # print(gateway, api)
-    return (gateway, api)
+    return (api_factory, gateway, api)
 
 async def get_lights(gateway, api):
     devices_command = gateway.get_devices()
@@ -110,14 +110,14 @@ def find_light_by_id(light_id, lights):
     for light in lights:
         if light.id == light_id:
             return light
-    
+
     raise LookupError('Bulb with id %s not found' % light_id)
 
 def scale(range, value, default, max=100):
     "all input values are range 1-100 (except hue)"
     if value is None:
         return default
-    
+
     floated = value / max
     return int(range[-1] * floated)
 
@@ -134,33 +134,34 @@ def partial_color_from_args(args):
     if args.brightness is not None:
         color[ATTR_LIGHT_DIMMER] = \
             scale(RANGE_BRIGHTNESS, args.brightness, default=0)
-    
+
     if args.transition_seconds is not None:
         color[ATTR_TRANSITION_TIME] = \
             args.transition_seconds * 10
-    
+
     return color
 
 async def main():
     args = parse_arguments()
-    gateway, api = await connect_gateway(args)
+    api_factory, gateway, api = await connect_gateway(args)
     lights = await get_lights(gateway, api)
     # print(lights) # if I want to choose another light
-    
+
     color_light_id = 65548 # <65548 - Wohnzimmer farbig (TRADFRI bulb E27 CWS opal 600lm)>
     color_light_id = 65559 # <65559 - Lange Wand (LCL001)>
-    
+
     #  Assuming lights[0] is a RGB bulb
     color_bulb = find_light_by_id(color_light_id, lights)
-    
+
     # color = partial_color_from_args(args)
     # await api(color_bulb.light_control.set_values(values=color))
-    
+
     new_color = color_from_args(color_bulb, args)
     await set_color(color_bulb, new_color, api, transition_seconds=args.transition_seconds)
+    await api_factory.shutdown()
 
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
+    asyncio.run(main())
 
 """
 Zu lösenden Probleme: Um das an HomeKitBridge anzuschließen
