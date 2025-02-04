@@ -1,9 +1,0 @@
-[submodule "HAP-python"]
-	path = HAP-python
-	url = https://github.com/ikalchev/HAP-python
-[submodule "libcoap"]
-	path = libcoap
-	url = https://github.com/home-assistant/libcoap.git
-[submodule "pytradfri"]
-	path = pytradfri
-	url = https://github.com/ggravlingen/pytradfri
