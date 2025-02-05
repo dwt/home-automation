@@ -27,7 +27,7 @@ def parse_arguments():
     parser.add_argument('--key', '-k', dest='key',
                         help='Key found on your Tradfri gateway')
     args = parser.parse_args()
-    
+
     if args.host not in load_json(CONFIG_FILE) and args.key is None:
         print("Please provide the 'Security Code' on the back of your "
               "Tradfri gateway:", end=" ")
@@ -36,7 +36,7 @@ def parse_arguments():
             raise PytradfriError("Invalid 'Security Code' provided.")
         else:
             args.key = key
-    
+
     return args
 
 async def connect_gateway(args):
@@ -63,7 +63,7 @@ async def connect_gateway(args):
             raise PytradfriError("Please provide the 'Security Code' on the "
                                  "back of your Tradfri gateway using the "
                                  "-K flag.")
-    
+
     api = api_factory.request
     gateway = Gateway()
     # print(gateway, api)
@@ -95,7 +95,7 @@ def find_light_by_id(light_id, lights):
     for light in lights:
         if light.id == light_id:
             return light
-    
+
     raise LookupError('Bulb with id %s not found' % light_id)
 
 async def main():
@@ -103,13 +103,13 @@ async def main():
     gateway, api = await connect_gateway(args)
     lights = await get_lights(gateway, api)
     # print(lights) # if I want to choose another light
-    
+
     color_light_id = 65548 # <65548 - Wohnzimmer farbig (TRADFRI bulb E27 CWS opal 600lm)>
     color_light_id = 65559 # <65559 - Lange Wand (LCL001)>
-    
+
     #  Assuming lights[0] is a RGB bulb
     color_bulb = find_light_by_id(color_light_id, lights)
-    
+
     while True:
         new_color = random_color(
             color_bulb,
@@ -119,11 +119,14 @@ async def main():
         )
         await set_color(color_bulb, new_color, api, transition_seconds=6)
         await asyncio.sleep(9)
-    
+
     # rgb = (244, 0, 0)
     # await set_color(color_bulb, rgb, api)
     # await asyncio.sleep(3)
     # print(get_color(color_bulb))
 
+def run():
+    asyncio.run(main())
+
 if __name__ == '__main__':
-    asyncio.get_event_loop().run_until_complete(main())
+    run()

@@ -158,8 +158,11 @@ async def main():
     await set_color(color_bulb, new_color, api, transition_seconds=args.transition_seconds)
     await api_factory.shutdown()
 
-if __name__ == '__main__':
+def run():
     asyncio.run(main())
+
+if __name__ == '__main__':
+    run()
 
 """
 Zu lösenden Probleme: Um das an HomeKitBridge anzuschließen

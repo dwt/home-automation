@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import logging
-
-from pyhap.accessory import Accessory, Bridge
-from pyhap import const
+import signal
 import subprocess
+
+from pyhap import const
+from pyhap.accessory import Accessory, Bridge
+from pyhap.accessory_driver import AccessoryDriver
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ class Fnordlicht(Accessory):
 
     def execute_turn_on(self):
         logger.info("Executing turn on command.")
-        self.subprocess = subprocess.Popen(['./fnordlicht.py'])
+        self.subprocess = subprocess.Popen(['fnordlicht'])
 
     def execute_turn_off(self):
         logger.info("Executing turn off command.")
@@ -94,7 +96,7 @@ class PhillipsHueLightStrip(Accessory):
             brightness = 0
 
         subprocess.run([
-            './light_strip.py',
+            'light_strip',
             '--hue', str(hue),
             '--saturation', str(saturation),
             '--brightness', str(brightness),
@@ -103,10 +105,8 @@ class PhillipsHueLightStrip(Accessory):
 
 
 
-import signal
-from pyhap.accessory_driver import AccessoryDriver
 
-if __name__ == '__main__':
+def main():
     logging.basicConfig(level=logging.INFO)
 
     # The AccessoryDriver preserves the state of the accessory
@@ -124,3 +124,6 @@ if __name__ == '__main__':
     signal.signal(signal.SIGTERM, driver.signal_handler)
 
     driver.start()
+
+if __name__ == '__main__':
+    main()
