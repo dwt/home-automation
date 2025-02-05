@@ -37,3 +37,8 @@ Fnordlicht is just an old CCC name for a random color changing LED Project, so t
 
 - [Tradfricoap can](https://pypi.org/project/tradfricoap/)
   - This worked, and now all the other code works too. ¿¿¿
+
+# How to build nix package
+- [Slightly outdated but clear tutorial](https://github.com/FRidh/python-on-nix/blob/master/tutorial.md)
+- [Nix Wiki on Python](https://nixos.wiki/wiki/Packaging/Python)
+- [Nixpkgs Python Reference](https://nixos.org/manual/nixpkgs/stable/#python)
