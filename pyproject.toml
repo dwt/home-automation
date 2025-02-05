@@ -1,5 +1,5 @@
 [project]
-name = "Heimautomatisierung"
+name = "home-automation"
 version = "0.1.0"
 description = "Simple bridge to Ikea Tradfri to push missing Phillips Hue devices to Homekit and allow me to trigger python scripts from HomeKit"
 readme = "README.md"
@@ -10,3 +10,11 @@ dependencies = [
     "pytradfri[async] @ git+https://github.com/home-assistant-libs/pytradfri",
     "colormath",
 ]
+
+[tool.uv]
+package = true
+
+[project.scripts]
+tradfri_bridge = "home_automation.tradfri_bridge:main"
+light_strip = "home_automation.light_strip:run"
+fnordlicht = "home_automation.fnordlicht:run"

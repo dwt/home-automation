@@ -136,9 +136,9 @@ wheels = [
 ]
 
 [[package]]
-name = "heimautomatisierung"
+name = "home-automation"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "colormath" },
     { name = "hap-python" },
