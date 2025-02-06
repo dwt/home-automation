@@ -69,6 +69,7 @@ in
         DynamicUser = true;
         StateDirectory = name;
         RuntimeDirectory = name;
+        WorkingDirectory = "~";
 
         BindReadOnlyPaths = [
           "${
