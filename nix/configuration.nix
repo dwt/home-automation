@@ -20,10 +20,17 @@ in
 {
   options.services.home-automation = {
     enable = mkEnableOption name;
+    home = mkOption {
+      type = lib.types.path;
+      default = "/var/lib/${name}";
+      description = ''
+        Path to the home directory of the service.
+      '';
+    };
 
     tradfri.secretsFile = mkOption {
       type = lib.types.path;
-      default = "/var/lib/${name}/tradfri.conf";
+      default = "${cfg.home}/tradfri.conf";
       description = ''
         Path to pre-shared-key for the virtual tradfri devices.
 
@@ -37,7 +44,7 @@ in
 
     homekit.secretsFile = mkOption {
       type = lib.types.path;
-      default = "/var/lib/${name}/tradfri_bridge.state";
+      default = "/${cfg.home}/tradfri_bridge.state";
       description = ''
         Path to secrets for tradfri_bridge
 
@@ -55,7 +62,7 @@ in
     users.users.${name} = {
       isSystemUser = true;
       createHome = true;
-      home = "/var/lib/${name}";
+      home = "${cfg.home}";
     };
 
     systemd.services.${name} = {
@@ -68,7 +75,7 @@ in
         Restart = "on-failure";
 
         User = "${name}";
-        WorkingDirectory = config.users.users.${name}.home;
+        WorkingDirectory = cfg.home
       };
 
       wantedBy = [ "multi-user.target" ];
