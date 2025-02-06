@@ -10,8 +10,7 @@
   ...
 }:
 let
-  module-name = "home-automation";
-  cfg = config.services.${module-name};
+  cfg = config.services.${name};
   inherit (pkgs) system;
 
   inherit (lib.options) mkOption;
@@ -20,11 +19,11 @@ let
 in
 {
   options.services.home-automation = {
-    enable = mkEnableOption module-name;
+    enable = mkEnableOption name;
 
     tradfri.secretsFile = mkOption {
       type = lib.types.path;
-      default = "/var/lib/private/home-automation/tradfri.conf";
+      default = "/var/lib/${name}/tradfri.conf";
       description = ''
         Path to pre-shared-key for the virtual tradfri devices.
 
@@ -38,7 +37,7 @@ in
 
     homekit.secretsFile = mkOption {
       type = lib.types.path;
-      default = "/var/lib/private/home-automation/tradfri_bridge.state";
+      default = "/var/lib/${name}/tradfri_bridge.state";
       description = ''
         Path to secrets for tradfri_bridge
 
@@ -53,34 +52,23 @@ in
   };
 
   config = mkIf cfg.enable {
+    users.users.${name} = {
+      isSystemUser = true;
+      createHome = true;
+      home = "/var/lib/${name}";
+    };
+
     systemd.services.${name} = {
       description = "${name} server";
 
       path = [ self.packages.${system}.default ];
 
-      # TODO might need to go to a static user to deploy the secrets
-      # FIXME how do I provide the state from pre-shared-key and fnordlicht-state
-      # likely at /var/lib/private/home-automation/
       serviceConfig = {
         ExecStart = self.apps.${system}.default.program;
         Restart = "on-failure";
 
-        # https://0pointer.net/blog/dynamic-users-with-systemd.html
-        DynamicUser = true;
-        StateDirectory = name;
-        RuntimeDirectory = name;
-        WorkingDirectory = "/var/lib/${name}";
-
-        BindReadOnlyPaths = [
-          "${
-            config.environment.etc."ssl/certs/ca-certificates.crt".source
-          }:/etc/ssl/certs/ca-certificates.crt"
-          builtins.storeDir
-          "-/etc/resolv.conf"
-          "-/etc/nsswitch.conf"
-          "-/etc/hosts"
-          "-/etc/localtime"
-        ];
+        User = "${name}";
+        WorkingDirectory = config.users.users.${name}.home;
       };
 
       wantedBy = [ "multi-user.target" ];
