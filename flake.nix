@@ -51,8 +51,30 @@
       pkgs = nixpkgs.legacyPackages.${system};
       pyprojectOverrides = pkgs.lib.composeExtensions (uv2nix_hammer_overrides.overrides pkgs) (
         final: prev: {
-          # use dtlssocket from nixpkgs, as it doesn't build cleanly itself
-          dtlssocket = pkgs.python313Packages.dtlssocket;
+          # use dtlssocket from nixpkgs (slightly newer than what we want)
+          # dtlssocket = pkgs.python313Packages.dtlssocket;
+          # or build from source
+          dtlssocket = prev.dtlssocket.overrideAttrs (old: {
+            # buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.zeromq ];
+
+            # For a comprehensive list see
+            # https://github.com/pyproject-nix/build-system-pkgs/blob/master/pyproject.toml
+            #
+            # For build-systems that are not present in this list you can either:
+            # - Add it to your `uv` project
+            # - Add it manually in an overlay
+            # - Submit a PR to build-system-pkgs adding the build system
+            nativeBuildInputs = old.nativeBuildInputs ++ [
+              pkgs.autoconf
+              pkgs.automake
+              pkgs.pkg-config
+              (final.resolveBuildSystem {
+                cython = [ ];
+                setuptools = [ ];
+              })
+            ];
+
+          });
         }
       );
 
