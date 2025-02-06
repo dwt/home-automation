@@ -40,30 +40,25 @@
     let
       name = "home-automation";
       inherit (nixpkgs) lib;
-      system = "aarch64-darwin";
+      pythonVersion = "python313";
 
-      python = pkgs.python313;
+      forAllSystems = lib.genAttrs lib.systems.flakeExposed;
+
       workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
-      overlay = workspace.mkPyprojectOverlay {
+      preferBinaryWheelsOverlay = workspace.mkPyprojectOverlay {
         sourcePreference = "wheel"; # more stable than "sdist";
       };
 
-      pkgs = nixpkgs.legacyPackages.${system};
-      pyprojectOverrides = pkgs.lib.composeExtensions (uv2nix_hammer_overrides.overrides pkgs) (
-        final: prev: {
+      pyprojectBuildSystemOverrides = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        (final: prev: {
           # use dtlssocket from nixpkgs (slightly newer than what we want)
           # dtlssocket = pkgs.python313Packages.dtlssocket;
           # or build from source
           dtlssocket = prev.dtlssocket.overrideAttrs (old: {
-            # buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.zeromq ];
-
-            # For a comprehensive list see
-            # https://github.com/pyproject-nix/build-system-pkgs/blob/master/pyproject.toml
-            #
-            # For build-systems that are not present in this list you can either:
-            # - Add it to your `uv` project
-            # - Add it manually in an overlay
-            # - Submit a PR to build-system-pkgs adding the build system
             nativeBuildInputs = old.nativeBuildInputs ++ [
               pkgs.autoconf
               pkgs.automake
@@ -73,13 +68,17 @@
                 setuptools = [ ];
               })
             ];
-
           });
-        }
+        })
       );
 
-      # Construct package set
-      pythonSet =
+      pythonSets = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          python = pkgs.${pythonVersion};
+        in
+        # Construct package set
         # Use base package set from pyproject.nix builders
         (pkgs.callPackage pyproject-nix.build.packages {
           inherit python;
@@ -87,57 +86,38 @@
           (
             lib.composeManyExtensions [
               pyproject-build-systems.overlays.default
-              overlay
-              pyprojectOverrides
+              preferBinaryWheelsOverlay
+              (uv2nix_hammer_overrides.overrides pkgs)
+              pyprojectBuildSystemOverrides.${system}
             ]
-          );
+          )
+      );
     in
     {
-      # Package a virtual environment as our main application.
-      #
-      # Enable no optional dependencies for production build.
-      packages.${system}.default = pythonSet.mkVirtualEnv "${name}-env" workspace.deps.default;
+      # Enable `nix build`
+      packages = forAllSystems (system: {
+        default = pythonSets.${system}.mkVirtualEnv "${name}-env" workspace.deps.default;
+      });
 
-      # Make hello runnable with `nix run`
-      apps.${system} = {
+      # Enable `nix run`
+      apps = forAllSystems (system: {
         default = {
           type = "app";
           program = "${self.packages.${system}.default}/bin/tradfri_bridge";
         };
-      };
+      });
 
-      # This example provides two different modes of development:
-      # - Impurely using uv to manage virtual environments
-      # - Pure development using uv2nix to manage virtual environments
-      devShells.${system} = {
-        # It is of course perfectly OK to keep using an impure virtualenv workflow and only use uv2nix to build packages.
-        # This devShell simply adds Python and undoes the dependency leakage done by Nixpkgs Python infrastructure.
-        default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.libcoap
-            pkgs.git
-          ];
-
-          packages = [
-            python
-            pkgs.uv
-          ];
-          env =
-            {
-              # Prevent uv from downloading different Python versions
-              UV_PYTHON_DOWNLOADS = "never";
-              # Force uv to use nixpkgs Python interpreter
-              UV_PYTHON = python.interpreter;
-            }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
-              # Python libraries often load native shared objects using dlopen(3).
-              # Setting LD_LIBRARY_PATH makes the dynamic library loader aware of libraries without using RPATH for lookup.
-              LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
-            };
-          shellHook = ''
-            unset PYTHONPATH
-          '';
-        };
-      };
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          python = pkgs.${pythonVersion};
+        in
+        {
+          default = import ./shell.nix {
+            inherit pkgs python lib;
+          };
+        }
+      );
     };
 }
