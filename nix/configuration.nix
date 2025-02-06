@@ -20,6 +20,7 @@ in
 {
   options.services.home-automation = {
     enable = mkEnableOption name;
+
     home = mkOption {
       type = lib.types.path;
       default = "/var/lib/${name}";
@@ -75,7 +76,7 @@ in
         Restart = "on-failure";
 
         User = "${name}";
-        WorkingDirectory = cfg.home
+        WorkingDirectory = cfg.home;
       };
 
       wantedBy = [ "multi-user.target" ];
