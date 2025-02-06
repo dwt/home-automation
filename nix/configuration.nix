@@ -64,6 +64,7 @@ in
       isSystemUser = true;
       createHome = true;
       home = "${cfg.home}";
+      group = name;
     };
 
     systemd.services.${name} = {
