@@ -69,7 +69,7 @@ in
         DynamicUser = true;
         StateDirectory = name;
         RuntimeDirectory = name;
-        WorkingDirectory = "~";
+        WorkingDirectory = "/var/lib/${name}";
 
         BindReadOnlyPaths = [
           "${
