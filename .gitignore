@@ -1,6 +1,6 @@
 Secrets.md
 Rückseite.jpg
-tradfri_standalone_psk.conf
+*.conf
 *.state
 .direnv
 result

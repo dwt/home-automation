@@ -111,7 +111,7 @@ def main():
 
     # The AccessoryDriver preserves the state of the accessory
     # (by default, in the below file), so that you can restart it without pairing again.
-    driver = AccessoryDriver(port=51826, persist_file='fnordlicht.state')
+    driver = AccessoryDriver(port=51826, persist_file='tradfri_bridge.state')
 
     bridge = Bridge(driver, 'Bridge')
     bridge.add_accessory(Fnordlicht(driver, 'Fnordlicht'))

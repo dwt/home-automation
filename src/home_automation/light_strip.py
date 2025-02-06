@@ -17,7 +17,7 @@ import asyncio
 import uuid
 import argparse
 
-CONFIG_FILE = 'tradfri_standalone_psk.conf'
+CONFIG_FILE = 'tradfri.conf'
 
 
 def parse_arguments():

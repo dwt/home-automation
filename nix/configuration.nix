@@ -22,27 +22,34 @@ in
   options.services.home-automation = {
     enable = mkEnableOption module-name;
 
-    pre-shared-key = mkOption {
-      type = lib.types.string;
+    tradfri.secretsFile = mkOption {
+      type = lib.types.path;
+      default = "/var/lib/private/home-automation/tradfri.conf";
       description = ''
-        Pre-shared-key for the tradfri bridge
+        Path to pre-shared-key for the virtual tradfri devices.
+
+        Write with a secrets manager like sops-nix so it does not become part of the nix store.
+
+        Create by starting light_strip manually, follow the prompts to provide the secret key.
+        After the first connectiont test again, no more key should be asked for.
+        Then the file is created in the current directory.
       '';
     };
 
-    fnordlicht-state = mkOption {
-      type = lib.types.string;
+    homekit.secretsFile = mkOption {
+      type = lib.types.path;
+      default = "/var/lib/private/home-automation/tradfri_bridge.state";
       description = ''
-        Secrets for fnordlicht
+        Path to secrets for tradfri_bridge
+
+        Write with a secrets manager like sops-nix so it does not become part of the nix store.
+
+        Create by starting tradfri_bridge manually, follow the instructions to pair it with
+        the HomeKit device, and check it works.
+        The file should be created after the initial launch.
       '';
     };
 
-    venv = mkOption {
-      type = lib.types.package;
-      default = self.packages.${system}.default;
-      description = ''
-        venv package
-      '';
-    };
   };
 
   config = mkIf cfg.enable {
@@ -51,10 +58,12 @@ in
 
       # TODO might need to go to a static user to deploy the secrets
       # FIXME how do I provide the state from pre-shared-key and fnordlicht-state
+      # likely at /var/lib/private/home-automation/
       serviceConfig = {
         ExecStart = self.apps.${system}.default.program;
         Restart = "on-failure";
 
+        # https://0pointer.net/blog/dynamic-users-with-systemd.html
         DynamicUser = true;
         StateDirectory = name;
         RuntimeDirectory = name;
