@@ -56,6 +56,8 @@ in
     systemd.services.${name} = {
       description = "${name} server";
 
+      path = [ self.packages.${system}.default ];
+
       # TODO might need to go to a static user to deploy the secrets
       # FIXME how do I provide the state from pre-shared-key and fnordlicht-state
       # likely at /var/lib/private/home-automation/
