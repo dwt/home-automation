@@ -66,6 +66,7 @@ in
       home = "${cfg.home}";
       group = name;
     };
+    users.groups.${name} = { };
 
     systemd.services.${name} = {
       description = "${name} server";
