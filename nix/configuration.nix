@@ -67,6 +67,7 @@ in
       group = name;
     };
     users.groups.${name} = { };
+    networking.firewall.allowedTCPPorts = [ 51826 ];
 
     systemd.services.${name} = {
       description = "${name} server";
