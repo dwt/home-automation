@@ -114,10 +114,17 @@
           python = pkgs.${pythonVersion};
         in
         {
-          default = import ./shell.nix {
+          default = import ./nix/shell.nix {
             inherit pkgs python lib;
           };
         }
       );
+
+      nixosModules = {
+        home-automation = import ./nix/configuration.nix {
+          inherit self name;
+        };
+      };
+
     };
 }

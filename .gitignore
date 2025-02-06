@@ -4,3 +4,4 @@ tradfri_standalone_psk.conf
 *.state
 .direnv
 result
+.nixos-test-history
