@@ -95,9 +95,36 @@
     in
     {
       # Enable `nix build`
-      packages = forAllSystems (system: {
-        default = pythonSets.${system}.mkVirtualEnv "${name}-env" workspace.deps.default;
-      });
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          util = (pkgs.callPackages pyproject-nix.build.util { });
+          venv = pythonSets.${system}.mkVirtualEnv "${name}-env" workspace.deps.default;
+        in
+        {
+          default =
+            # mkApplicationhides all the details of the virtualenv and exposes only the application scripts
+            (util.mkApplication {
+              venv = venv;
+              package = pythonSets.${system}.${name};
+            })
+            # Wrapping the main program, so it sets up PATH correctly to enable
+            # calling the other programs from the package
+            .overrideAttrs
+              (old: {
+                nativeBuildInputs = old.nativeBuildInputs ++ [
+                  pkgs.makeWrapper
+                ];
+                buildCommand =
+                  old.buildCommand
+                  + ''
+                    echo "Wrapping tradfri_bridge to hardcode correct path"
+                    wrapProgram "$out/bin/tradfri_bridge" --prefix PATH : "$out/bin"
+                  '';
+              });
+        }
+      );
 
       # Enable `nix run`
       apps = forAllSystems (system: {
