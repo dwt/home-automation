@@ -1,5 +1,5 @@
 {
-  description = "Hello world flake using uv2nix";
+  description = "Häckers Home Automation using uv2nix";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -29,7 +29,7 @@
   };
 
   outputs =
-    {
+    inputs@{
       self,
       nixpkgs,
       uv2nix,
@@ -44,96 +44,21 @@
       pythonVersion = "python313";
 
       forAllSystems = lib.genAttrs lib.systems.flakeExposed;
-
-      workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
-      preferBinaryWheelsOverlay = workspace.mkPyprojectOverlay {
-        sourcePreference = "wheel"; # more stable than "sdist";
+      python-package = import nix/python-package.nix {
+        inherit
+          name
+          pythonVersion
+          forAllSystems
+          inputs
+          ;
       };
-
-      pyprojectBuildSystemOverrides = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        (final: prev: {
-          # use dtlssocket from nixpkgs (slightly newer than what we want)
-          # dtlssocket = pkgs.python313Packages.dtlssocket;
-          # or build from source
-          dtlssocket = prev.dtlssocket.overrideAttrs (old: {
-            nativeBuildInputs = old.nativeBuildInputs ++ [
-              pkgs.autoconf
-              pkgs.automake
-              pkgs.pkg-config
-              (final.resolveBuildSystem {
-                cython = [ ];
-                setuptools = [ ];
-              })
-            ];
-          });
-        })
-      );
-
-      pythonSets = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          python = pkgs.${pythonVersion};
-        in
-        # Construct package set
-        # Use base package set from pyproject.nix builders
-        (pkgs.callPackage pyproject-nix.build.packages {
-          inherit python;
-        }).overrideScope
-          (
-            lib.composeManyExtensions [
-              pyproject-build-systems.overlays.default
-              preferBinaryWheelsOverlay
-              (uv2nix_hammer_overrides.overrides pkgs)
-              pyprojectBuildSystemOverrides.${system}
-            ]
-          )
-      );
     in
     {
       # Enable `nix build`
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          util = (pkgs.callPackages pyproject-nix.build.util { });
-          venv = pythonSets.${system}.mkVirtualEnv "${name}-env" workspace.deps.default;
-        in
-        {
-          default =
-            # mkApplicationhides all the details of the virtualenv and exposes only the application scripts
-            (util.mkApplication {
-              venv = venv;
-              package = pythonSets.${system}.${name};
-            })
-            # Wrapping the main program, so it sets up PATH correctly to enable
-            # calling the other programs from the package
-            .overrideAttrs
-              (old: {
-                nativeBuildInputs = old.nativeBuildInputs ++ [
-                  pkgs.makeWrapper
-                ];
-                buildCommand =
-                  old.buildCommand
-                  + ''
-                    echo "Wrapping tradfri_bridge to hardcode correct path"
-                    wrapProgram "$out/bin/tradfri_bridge" --prefix PATH : "$out/bin"
-                  '';
-              });
-        }
-      );
+      packages = python-package.packages;
 
       # Enable `nix run`
-      apps = forAllSystems (system: {
-        default = {
-          type = "app";
-          program = "${self.packages.${system}.default}/bin/tradfri_bridge";
-        };
-      });
+      apps = python-package.apps;
 
       devShells = forAllSystems (
         system:
