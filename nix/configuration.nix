@@ -18,7 +18,7 @@ let
   inherit (lib.modules) mkIf;
 in
 {
-  options.services.home-automation = {
+  options.services.${name} = {
     enable = mkEnableOption name;
 
     home = mkOption {
