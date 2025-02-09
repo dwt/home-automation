@@ -148,10 +148,8 @@
         }
       );
 
-      nixosModules = {
-        home-automation = import ./nix/configuration.nix {
-          inherit self name;
-        };
+      nixosModules.default = import ./nix/configuration.nix {
+        inherit self name;
       };
 
     };
