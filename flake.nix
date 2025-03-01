@@ -32,10 +32,6 @@
     inputs@{
       self,
       nixpkgs,
-      uv2nix,
-      pyproject-nix,
-      pyproject-build-systems,
-      uv2nix_hammer_overrides,
       ...
     }:
     let
@@ -44,6 +40,7 @@
       pythonVersion = "python313";
 
       forAllSystems = lib.genAttrs lib.systems.flakeExposed;
+
       python-package = import nix/python-package.nix {
         inherit
           name
@@ -54,11 +51,11 @@
       };
     in
     {
-      # Enable `nix build`
-      packages = python-package.packages;
-
       # Enable `nix run`
       apps = python-package.apps;
+
+      # Enable `nix build`
+      packages = python-package.packages;
 
       devShells = forAllSystems (
         system:
